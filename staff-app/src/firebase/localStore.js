@@ -1,146 +1,124 @@
-// localStorage-based store used when Firebase is not yet configured.
+// Demo-mode data layer — talks to the shared store server on port 3999.
+// Keeps Firebase-shaped API (subscribe returns unsubscribe fn).
 
-const KEY = {
-  users: 'gg_users',
-  restaurants: 'gg_restaurants',
-  menuItems: 'gg_menuItems',
-  orders: 'gg_orders',
-  currentUser: 'gg_currentUser',
+const BASE = 'http://localhost:3999'
+
+async function api(path, method = 'GET', body) {
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  return res.json()
 }
 
-function read(key, fallback) {
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback } catch { return fallback }
-}
-function write(key, value) { localStorage.setItem(key, JSON.stringify(value)) }
-
-// Simple in-process pub/sub for real-time-like subscriptions
-const subs = {}
-function notify(channel) { (subs[channel] || []).forEach((cb) => cb()) }
-function addSub(channel, cb) {
-  subs[channel] = [...(subs[channel] || []), cb]
-  return () => { subs[channel] = (subs[channel] || []).filter((f) => f !== cb) }
+// SSE subscription — calls callback when server broadcasts a change of `type`
+function onEvent(type, cb) {
+  const es = new EventSource(`${BASE}/events`)
+  es.onmessage = (e) => {
+    const msg = JSON.parse(e.data)
+    if (msg.type === type || msg.type === 'connected') cb()
+  }
+  es.onerror = () => es.close()
+  return () => es.close()
 }
 
 // ── Auth ───────────────────────────────────────────────────────────────────────
 
 export function localGetCurrentUser() {
-  return read(KEY.currentUser, null)
+  try { return JSON.parse(sessionStorage.getItem('gg_staff_user') || 'null') } catch { return null }
 }
 
 export async function localRegisterStaff(restaurantName, email, password) {
-  const users = read(KEY.users, [])
-  if (users.find((u) => u.email === email)) throw Object.assign(new Error('Email already in use.'), { code: 'auth/email-already-in-use' })
-  const uid = 'local-' + Date.now()
   const restaurantId = restaurantName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+  const uid = 'local-' + Date.now()
   const profile = { uid, email, name: `${restaurantName} Staff`, role: 'staff', restaurantId, password }
-  write(KEY.users, [...users, profile])
 
-  const restaurants = read(KEY.restaurants, {})
-  restaurants[restaurantId] = {
+  const result = await api('/users', 'POST', profile)
+  if (result.error === 'email-already-in-use')
+    throw Object.assign(new Error('Email already in use.'), { code: 'auth/email-already-in-use' })
+
+  await api('/restaurants', 'POST', {
     id: restaurantId, name: restaurantName, tagline: '', description: '',
     category: '', location: '', openingHours: '', phone: '',
     imageUrl: '', logoUrl: '', isOpen: false, published: false,
-  }
-  write(KEY.restaurants, restaurants)
+  })
 
   const { password: _, ...safe } = profile
-  write(KEY.currentUser, safe)
+  sessionStorage.setItem('gg_staff_user', JSON.stringify(safe))
   return safe
 }
 
 export async function localLoginStaff(email, password) {
-  const users = read(KEY.users, [])
+  const users = await api('/users')
   const user = users.find((u) => u.email === email && u.password === password)
   if (!user) throw new Error('Invalid credentials or not a staff account.')
-  if (user.role !== 'staff') throw new Error('Not a staff account.')
   const { password: _, ...safe } = user
-  write(KEY.currentUser, safe)
+  sessionStorage.setItem('gg_staff_user', JSON.stringify(safe))
   return safe
 }
 
 export async function localLogoutStaff() {
-  localStorage.removeItem(KEY.currentUser)
+  sessionStorage.removeItem('gg_staff_user')
 }
 
 export async function localUpdateUser(uid, data) {
-  const users = read(KEY.users, [])
-  write(KEY.users, users.map((u) => u.uid === uid ? { ...u, ...data } : u))
-  const current = read(KEY.currentUser, null)
-  if (current?.uid === uid) write(KEY.currentUser, { ...current, ...data })
+  await api(`/users/${uid}`, 'PUT', data)
+  const current = localGetCurrentUser()
+  if (current?.uid === uid) {
+    sessionStorage.setItem('gg_staff_user', JSON.stringify({ ...current, ...data }))
+  }
 }
 
 // ── Restaurants ────────────────────────────────────────────────────────────────
 
 export function localSubscribeRestaurant(restaurantId, callback) {
-  function emit() {
-    const restaurants = read(KEY.restaurants, {})
-    const r = restaurants[restaurantId]
+  async function emit() {
+    const r = await api(`/restaurants/${restaurantId}`)
     if (r) callback(r)
   }
   emit()
-  return addSub(`restaurant:${restaurantId}`, emit)
+  return onEvent('restaurants', emit)
 }
 
 export async function localUpdateRestaurant(restaurantId, data) {
-  const restaurants = read(KEY.restaurants, {})
-  restaurants[restaurantId] = { ...restaurants[restaurantId], ...data }
-  write(KEY.restaurants, restaurants)
-  notify(`restaurant:${restaurantId}`)
+  await api(`/restaurants/${restaurantId}`, 'PUT', data)
 }
 
 // ── Menu Items ─────────────────────────────────────────────────────────────────
 
 export function localSubscribeMenu(restaurantId, callback) {
-  function emit() {
-    const items = read(KEY.menuItems, [])
-    callback(items.filter((i) => i.restaurantId === restaurantId))
+  async function emit() {
+    const items = await api(`/menu-items?restaurantId=${restaurantId}`)
+    callback(items)
   }
   emit()
-  return addSub(`menu:${restaurantId}`, emit)
+  return onEvent('menuItems', emit)
 }
 
 export async function localAddMenuItem(data) {
-  const items = read(KEY.menuItems, [])
-  const id = 'item-' + Date.now()
-  write(KEY.menuItems, [...items, { id, ...data }])
-  notify(`menu:${data.restaurantId}`)
+  await api('/menu-items', 'POST', data)
 }
 
 export async function localUpdateMenuItem(itemId, data) {
-  const items = read(KEY.menuItems, [])
-  const updated = items.map((i) => i.id === itemId ? { ...i, ...data } : i)
-  write(KEY.menuItems, updated)
-  const item = updated.find((i) => i.id === itemId)
-  if (item) notify(`menu:${item.restaurantId}`)
+  await api(`/menu-items/${itemId}`, 'PUT', data)
 }
 
 export async function localDeleteMenuItem(itemId) {
-  const items = read(KEY.menuItems, [])
-  const item = items.find((i) => i.id === itemId)
-  write(KEY.menuItems, items.filter((i) => i.id !== itemId))
-  if (item) notify(`menu:${item.restaurantId}`)
+  await api(`/menu-items/${itemId}`, 'DELETE')
 }
 
-// ── Orders (written by customer app, read here via storage event) ──────────────
+// ── Orders ─────────────────────────────────────────────────────────────────────
 
 export function localSubscribeRestaurantOrders(restaurantId, callback) {
-  function emit() {
-    const orders = read(KEY.orders, [])
-    callback(orders.filter((o) => o.restaurantId === restaurantId).sort((a, b) => b.createdAt - a.createdAt))
+  async function emit() {
+    const orders = await api(`/orders?restaurantId=${restaurantId}`)
+    callback(orders)
   }
   emit()
-  // storage event fires when the customer app (other tab) writes new orders
-  function handler(e) { if (e.key === KEY.orders) emit() }
-  window.addEventListener('storage', handler)
-  // also listen for same-tab updates via pub/sub
-  const unsub = addSub(`orders:${restaurantId}`, emit)
-  return () => { window.removeEventListener('storage', handler); unsub() }
+  return onEvent('orders', emit)
 }
 
 export async function localUpdateOrderStatus(orderId, status) {
-  const orders = read(KEY.orders, [])
-  const updated = orders.map((o) => o.id === orderId ? { ...o, status } : o)
-  write(KEY.orders, updated)
-  const order = updated.find((o) => o.id === orderId)
-  if (order) notify(`orders:${order.restaurantId}`)
+  await api(`/orders/${orderId}`, 'PUT', { status })
 }
