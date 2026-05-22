@@ -1,4 +1,4 @@
-# Grab & Go — Campus Cafeteria (Split-App Architecture)
+# Tik-tak— Campus Cafeteria (Split-App Architecture)
 
 Two separate React apps, one Firebase backend. Customers order from any of 5 restaurants; each restaurant's staff manages their own dashboard.
 
