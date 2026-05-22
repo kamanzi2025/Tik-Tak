@@ -21,10 +21,14 @@ const PAYMENT_BADGE = {
 }
 
 export default function StaffOrderCard({ order }) {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading]         = useState(false)
   const [paidLoading, setPaidLoading] = useState(false)
-  const [declining, setDeclining] = useState(false)
-  const shortId = order.id?.slice(-5).toUpperCase()
+  const [declining, setDeclining]     = useState(false)
+  const [showCancel, setShowCancel]   = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
+  const [cancelling, setCancelling]   = useState(false)
+
+  const shortId  = order.id?.slice(-5).toUpperCase()
   const payBadge = PAYMENT_BADGE[order.paymentMethod] || PAYMENT_BADGE.cash
 
   async function advance() {
@@ -47,8 +51,17 @@ export default function StaffOrderCard({ order }) {
     setDeclining(false)
   }
 
+  async function confirmCancel() {
+    if (!cancelReason.trim()) return
+    setCancelling(true)
+    await updateOrderStatus(order.id, 'cancelled', { cancelReason: cancelReason.trim() })
+    setCancelling(false)
+    setShowCancel(false)
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+      {/* Header */}
       <div className="flex justify-between items-start mb-2">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -68,6 +81,7 @@ export default function StaffOrderCard({ order }) {
         </div>
       </div>
 
+      {/* Items */}
       <div className="space-y-0.5 mb-3">
         {order.items?.map((item, i) => (
           <p key={i} className="text-xs text-gray-700">{item.qty}× {item.name}</p>
@@ -79,30 +93,61 @@ export default function StaffOrderCard({ order }) {
 
       {order.guestPhone && <p className="text-xs text-gray-400 mb-2">📞 {order.guestPhone}</p>}
 
-      <div className="flex gap-2">
-        {order.status === 'received' && (
-          <button onClick={decline} disabled={declining}
-            className="flex-1 border border-red-300 text-red-500 rounded-lg py-2 text-xs font-semibold disabled:opacity-50">
-            {declining ? '…' : 'Decline'}
-          </button>
-        )}
+      {/* Cancel reason box — shown only at ready stage */}
+      {showCancel && order.status === 'ready' && (
+        <div className="mb-2 bg-red-50 border border-red-200 rounded-xl p-3 space-y-2">
+          <p className="text-xs font-semibold text-red-700">Why are you cancelling?</p>
+          <textarea
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            placeholder="e.g. Item no longer available, ran out of stock…"
+            rows={2}
+            className="w-full border border-red-200 rounded-lg px-3 py-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-red-400"
+          />
+          <div className="flex gap-2">
+            <button onClick={() => { setShowCancel(false); setCancelReason('') }}
+              className="flex-1 border border-gray-300 text-gray-600 rounded-lg py-2 text-xs font-semibold">
+              Back
+            </button>
+            <button onClick={confirmCancel} disabled={cancelling || !cancelReason.trim()}
+              className="flex-1 bg-red-500 text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-50">
+              {cancelling ? '…' : 'Confirm Cancel'}
+            </button>
+          </div>
+        </div>
+      )}
 
-        {/* Accept / Mark Ready */}
-        {ACTION_LABEL[order.status] && (
-          <button onClick={advance} disabled={loading}
-            className="flex-1 bg-staff text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-50">
-            {loading ? '…' : ACTION_LABEL[order.status]}
-          </button>
-        )}
+      {/* Action buttons */}
+      {!showCancel && (
+        <div className="flex gap-2">
+          {order.status === 'received' && (
+            <button onClick={decline} disabled={declining}
+              className="flex-1 border border-red-300 text-red-500 rounded-lg py-2 text-xs font-semibold disabled:opacity-50">
+              {declining ? '…' : 'Decline'}
+            </button>
+          )}
 
-        {/* Ready stage — two completion buttons */}
-        {order.status === 'ready' && (
-          <button onClick={completeWithPayment} disabled={paidLoading}
-            className="flex-1 bg-green-600 text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-50">
-            {paidLoading ? '…' : 'Payment Received'}
-          </button>
-        )}
-      </div>
+          {ACTION_LABEL[order.status] && (
+            <button onClick={advance} disabled={loading}
+              className="flex-1 bg-staff text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-50">
+              {loading ? '…' : ACTION_LABEL[order.status]}
+            </button>
+          )}
+
+          {order.status === 'ready' && (
+            <>
+              <button onClick={() => setShowCancel(true)}
+                className="flex-1 border border-red-300 text-red-500 rounded-lg py-2 text-xs font-semibold">
+                Cancel
+              </button>
+              <button onClick={completeWithPayment} disabled={paidLoading}
+                className="flex-1 bg-green-600 text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-50">
+                {paidLoading ? '…' : 'Payment Received'}
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }

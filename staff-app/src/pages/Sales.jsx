@@ -40,7 +40,7 @@ function formatDate(ts) {
 const STATUS_COLORS = {
   received: 'bg-blue-100 text-blue-700', preparing: 'bg-yellow-100 text-yellow-700',
   ready: 'bg-green-100 text-green-700', completed: 'bg-gray-100 text-gray-600',
-  declined: 'bg-red-100 text-red-600',
+  declined: 'bg-red-100 text-red-600', cancelled: 'bg-orange-100 text-orange-600',
 }
 
 export default function Sales() {
