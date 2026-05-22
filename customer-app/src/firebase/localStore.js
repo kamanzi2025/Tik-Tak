@@ -1,4 +1,47 @@
 // Reads from the same localStorage keys written by the staff app.
+// Also provides local customer auth (sign up / sign in / sign out).
+
+const CUSTOMER_KEY = {
+  customers: 'gg_customers',
+  currentCustomer: 'gg_current_customer',
+}
+
+function readLocal(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback } catch { return fallback }
+}
+function writeLocal(key, value) { localStorage.setItem(key, JSON.stringify(value)) }
+
+// ── Customer Auth ──────────────────────────────────────────────────────────────
+
+export function localGetCurrentCustomer() {
+  return readLocal(CUSTOMER_KEY.currentCustomer, null)
+}
+
+export async function localSignUpCustomer(name, email, password) {
+  const customers = readLocal(CUSTOMER_KEY.customers, [])
+  if (customers.find((c) => c.email === email))
+    throw Object.assign(new Error('Email already in use.'), { code: 'auth/email-already-in-use' })
+  const uid = 'cust-' + Date.now()
+  const profile = { uid, name, email, password, role: 'customer' }
+  writeLocal(CUSTOMER_KEY.customers, [...customers, profile])
+  const { password: _, ...safe } = profile
+  writeLocal(CUSTOMER_KEY.currentCustomer, safe)
+  return safe
+}
+
+export async function localSignInCustomer(email, password) {
+  const customers = readLocal(CUSTOMER_KEY.customers, [])
+  const customer = customers.find((c) => c.email === email && c.password === password)
+  if (!customer) throw new Error('Invalid email or password.')
+  const { password: _, ...safe } = customer
+  writeLocal(CUSTOMER_KEY.currentCustomer, safe)
+  return safe
+}
+
+export async function localLogoutCustomer() {
+  localStorage.removeItem(CUSTOMER_KEY.currentCustomer)
+}
+
 // Uses the `storage` event so changes in the staff app tab instantly
 // trigger callbacks in this (customer) tab.
 

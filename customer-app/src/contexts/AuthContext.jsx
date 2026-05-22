@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from '../firebase/config'
+import { auth, isFirebaseConfigured } from '../firebase/config'
 import { getUser } from '../firebase/firestore'
+import { localGetCurrentCustomer } from '../firebase/localStore'
 
 const AuthContext = createContext(null)
 
@@ -16,6 +17,12 @@ export function AuthProvider({ children }) {
   )
 
   useEffect(() => {
+    if (!isFirebaseConfigured) {
+      setUser(localGetCurrentCustomer())
+      setLoading(false)
+      return
+    }
+
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const profile = await getUser(firebaseUser.uid)
