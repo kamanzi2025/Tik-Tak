@@ -1,0 +1,21 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+*.local
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp

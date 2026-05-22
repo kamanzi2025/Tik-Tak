@@ -1,0 +1,94 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ─────────────────────────────────────────────────────
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isCustomer() {
+      return isAuthenticated() && getUserData().role == 'customer';
+    }
+
+    function isStaff() {
+      return isAuthenticated() && getUserData().role == 'staff';
+    }
+
+    function staffRestaurantId() {
+      return getUserData().restaurantId;
+    }
+
+    function ownsRestaurant(restaurantId) {
+      return isStaff() && staffRestaurantId() == restaurantId;
+    }
+
+    // ── users ────────────────────────────────────────────────────────────────
+
+    match /users/{uid} {
+      // Users can read and write their own document
+      allow read, write: if isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // ── restaurants ──────────────────────────────────────────────────────────
+
+    match /restaurants/{restaurantId} {
+      // Customers can read all restaurants (for home screen)
+      allow read: if isAuthenticated();
+
+      // Staff can update only their own restaurant
+      allow update: if ownsRestaurant(restaurantId);
+
+      // No one creates or deletes restaurants via client (use Admin SDK / seed)
+      allow create, delete: if false;
+    }
+
+    // ── menuItems ────────────────────────────────────────────────────────────
+
+    match /menuItems/{itemId} {
+      // Customers can read all menu items
+      allow read: if isAuthenticated();
+
+      // Staff can create menu items for their restaurant only
+      allow create: if isStaff()
+        && request.resource.data.restaurantId == staffRestaurantId();
+
+      // Staff can update/delete menu items belonging to their restaurant
+      allow update, delete: if isStaff()
+        && resource.data.restaurantId == staffRestaurantId();
+    }
+
+    // ── orders ───────────────────────────────────────────────────────────────
+
+    match /orders/{orderId} {
+      // Customers can create orders and read their own orders
+      allow create: if isCustomer()
+        && request.resource.data.customerId == request.auth.uid;
+
+      allow read: if isAuthenticated()
+        && (
+          // Customer reads their own order
+          (isCustomer() && resource.data.customerId == request.auth.uid)
+          ||
+          // Staff reads orders for their restaurant
+          (isStaff() && resource.data.restaurantId == staffRestaurantId())
+        );
+
+      // Staff can update order status for their restaurant only
+      allow update: if isStaff()
+        && resource.data.restaurantId == staffRestaurantId()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status']);
+
+      // Staff can delete (decline) orders for their restaurant
+      allow delete: if isStaff()
+        && resource.data.restaurantId == staffRestaurantId();
+    }
+  }
+}

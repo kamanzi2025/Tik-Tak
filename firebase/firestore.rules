@@ -1,0 +1,65 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+
+    function isStaffOf(restaurantId) {
+      return request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff'
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.restaurantId == restaurantId;
+    }
+
+    function isOrderOwner() {
+      return request.auth != null
+        && resource.data.customerId == request.auth.uid;
+    }
+
+    function isGuestOrder() {
+      // Guest orders have no customerId — readable by anyone (order code is the credential)
+      return resource.data.customerId == null;
+    }
+
+    // ── restaurants ────────────────────────────────────────────────────────────
+    // Public read so guests can browse without signing in
+
+    match /restaurants/{restaurantId} {
+      allow read: if true;
+      allow update: if isStaffOf(restaurantId);
+      allow delete: if isStaffOf(restaurantId);
+      allow create: if false;
+    }
+
+    // ── menuItems ──────────────────────────────────────────────────────────────
+
+    match /menuItems/{itemId} {
+      allow read: if true;
+      allow create: if isStaffOf(request.resource.data.restaurantId);
+      allow update, delete: if isStaffOf(resource.data.restaurantId);
+    }
+
+    // ── orders ─────────────────────────────────────────────────────────────────
+
+    match /orders/{orderId} {
+      // Anyone (guest or signed-in) can create an order
+      allow create: if true;
+
+      // Readable by: the signed-in customer who owns it, OR staff of that restaurant,
+      // OR if it's a guest order (customerId == null) — order code acts as the credential
+      allow read: if isGuestOrder() || isOrderOwner() || isStaffOf(resource.data.restaurantId);
+
+      // Staff can update status; customers can update their own (e.g. cancel)
+      allow update: if isStaffOf(resource.data.restaurantId)
+        || (request.auth != null && resource.data.customerId == request.auth.uid);
+
+      allow delete: if isStaffOf(resource.data.restaurantId);
+    }
+
+    // ── users ──────────────────────────────────────────────────────────────────
+
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

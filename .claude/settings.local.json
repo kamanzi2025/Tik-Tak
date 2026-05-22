@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node \"/Users/kamanzi/Desktop/Grab and Go/staff-app/node_modules/.bin/vite\")"
+    ]
+  }
+}
