@@ -85,7 +85,7 @@ export function localSubscribeMenu(restaurantId, callback) {
 // ── Orders ─────────────────────────────────────────────────────────────────────
 
 export function localPlaceOrder(orderData) {
-  const orderCode = 'GG-' + Math.random().toString(36).substring(2, 6).toUpperCase()
+  const orderCode = 'TT-' + Math.random().toString(36).substring(2, 6).toUpperCase()
   return api('/orders', 'POST', { orderCode, ...orderData, status: 'received' })
 }
 

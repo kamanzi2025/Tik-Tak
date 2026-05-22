@@ -50,7 +50,7 @@ export async function placeOrder(orderData) {
   if (!isFirebaseConfigured) return localPlaceOrder(orderData)
 
   for (let i = 0; i < 5; i++) {
-    const orderCode = 'GG-' + Math.random().toString(36).substring(2, 6).toUpperCase()
+    const orderCode = 'TT-' + Math.random().toString(36).substring(2, 6).toUpperCase()
     const collision = await getDocs(
       query(collection(db, 'orders'), where('orderCode', '==', orderCode), limit(1))
     )
@@ -60,7 +60,7 @@ export async function placeOrder(orderData) {
     })
     return { id: ref.id, orderCode }
   }
-  const orderCode = 'GG-' + Date.now().toString(36).slice(-4).toUpperCase()
+  const orderCode = 'TT-' + Date.now().toString(36).slice(-4).toUpperCase()
   const ref = await addDoc(collection(db, 'orders'), {
     ...orderData, orderCode, status: 'received', createdAt: serverTimestamp(),
   })

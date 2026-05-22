@@ -173,5 +173,5 @@ const server = createServer(async (req, res) => {
 })
 
 server.listen(PORT, () => {
-  console.log(`\n  Grab & Go shared store running on http://localhost:${PORT}\n`)
+  console.log(`\n  Tik-Tak shared store running on http://localhost:${PORT}\n`)
 })

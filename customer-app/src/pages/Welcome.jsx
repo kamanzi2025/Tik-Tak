@@ -17,7 +17,7 @@ export default function Welcome() {
         {/* Branding */}
         <div className="flex flex-col items-center mb-10">
           <Logo size={80} />
-          <h1 className="mt-4 text-3xl font-bold text-gray-900 tracking-tight">Grab &amp; Go</h1>
+          <h1 className="mt-4 text-3xl font-bold text-gray-900 tracking-tight">Tik-Tak</h1>
           <p className="mt-1 text-gray-500 text-sm text-center">Order from 5 restaurants on campus.<br/>No waiting in line.</p>
         </div>
 

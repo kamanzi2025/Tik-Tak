@@ -30,7 +30,7 @@ export default function Login() {
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-10">
           <Logo size={72} />
-          <h1 className="mt-4 text-3xl font-bold text-white">Grab &amp; Go</h1>
+          <h1 className="mt-4 text-3xl font-bold text-white">Tik-Tak</h1>
           <p className="mt-1 text-white/60 text-sm">Restaurant Portal</p>
         </div>
 
@@ -67,7 +67,7 @@ export default function Login() {
           </p>
         </form>
 
-        <p className="text-center text-xs text-white/40 mt-6">Staff access only · Grab &amp; Go v1.0</p>
+        <p className="text-center text-xs text-white/40 mt-6">Restaurant access only · Tik-Tak v1.0</p>
       </div>
     </div>
   )

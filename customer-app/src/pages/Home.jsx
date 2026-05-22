@@ -33,7 +33,7 @@ export default function Home() {
         <div className="flex items-center gap-3">
           <Logo size={36} />
           <div>
-            <h1 className="text-white font-bold text-xl">Grab &amp; Go</h1>
+            <h1 className="text-white font-bold text-xl">Tik-Tak</h1>
             {user
               ? <p className="text-white/70 text-xs">Hey, {user.name}!</p>
               : <p className="text-white/70 text-xs">Guest mode — <Link to="/signin" className="underline">sign in</Link> to save history</p>
