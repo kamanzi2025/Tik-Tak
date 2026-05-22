@@ -97,6 +97,30 @@
       "note": "",
       "status": "completed",
       "createdAt": 1779452451237
+    },
+    {
+      "id": "order-1779452952801",
+      "orderCode": "GG-OUIZ",
+      "restaurantId": "chills",
+      "restaurantName": "Sip and Chill",
+      "customerId": null,
+      "customerName": "kkkk",
+      "guestPhone": "0788485211",
+      "items": [
+        {
+          "itemId": "item-1779452674922",
+          "name": "kiwingu",
+          "price": 2500,
+          "qty": 1
+        }
+      ],
+      "total": 2500,
+      "paymentMethod": "cash",
+      "paymentStatus": "unpaid",
+      "note": "",
+      "status": "completed",
+      "createdAt": 1779452952801,
+      "paid": true
     }
   ],
   "users": [

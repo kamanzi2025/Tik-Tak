@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { addMenuItem, updateMenuItem, deleteMenuItem } from '../../firebase/firestore'
+import ImagePicker from './ImagePicker'
 
 const CloseIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
@@ -59,16 +60,17 @@ export default function ItemModal({ item, restaurantId, existingCategories, onCl
         </div>
 
         <div className="overflow-y-auto flex-1 px-4 py-4 space-y-3">
-          {[
-            { key: 'name', label: 'Item Name *', placeholder: 'e.g. Grilled Chicken' },
-            { key: 'imageUrl', label: 'Image URL', placeholder: 'https://…' },
-          ].map(({ key, label, placeholder }) => (
-            <div key={key}>
-              <label className="text-xs font-medium text-gray-600 block mb-1">{label}</label>
-              <input value={form[key]} onChange={(e) => update(key, e.target.value)} placeholder={placeholder}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-staff" />
-            </div>
-          ))}
+          <div>
+            <label className="text-xs font-medium text-gray-600 block mb-1">Item Name *</label>
+            <input value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="e.g. Grilled Chicken"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-staff" />
+          </div>
+
+          <ImagePicker
+            label="Item Photo"
+            value={form.imageUrl}
+            onChange={(val) => update('imageUrl', val)}
+          />
 
           <div className="relative">
             <label className="text-xs font-medium text-gray-600 block mb-1">Category *</label>

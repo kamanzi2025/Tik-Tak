@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useRestaurant } from '../hooks/useRestaurant'
 import { updateRestaurant } from '../firebase/firestore'
 import RestaurantPreviewCard from '../components/staff/RestaurantPreviewCard'
+import ImagePicker from '../components/staff/ImagePicker'
 
 const FIELDS = [
   { key: 'name', label: 'Restaurant Name', placeholder: 'e.g. Mama Africa Grill' },
@@ -12,8 +13,6 @@ const FIELDS = [
   { key: 'location', label: 'Campus Location', placeholder: 'e.g. Block A, Ground Floor' },
   { key: 'openingHours', label: 'Opening Hours', placeholder: 'e.g. Mon–Fri 7am–5pm' },
   { key: 'phone', label: 'Phone Number', placeholder: '0788 000 000' },
-  { key: 'imageUrl', label: 'Banner Image URL', placeholder: 'https://…' },
-  { key: 'logoUrl', label: 'Logo Image URL', placeholder: 'https://…' },
 ]
 
 const DEFAULT_PAY = {
@@ -154,6 +153,21 @@ export default function RestaurantProfile() {
               )}
             </div>
           ))}
+        </div>
+
+        {/* Images */}
+        <div className="bg-white rounded-2xl shadow-sm p-4 space-y-5">
+          <h3 className="font-semibold text-gray-900 text-sm">Photos</h3>
+          <ImagePicker
+            label="Banner Image"
+            value={form.imageUrl}
+            onChange={(val) => update('imageUrl', val)}
+          />
+          <ImagePicker
+            label="Logo"
+            value={form.logoUrl}
+            onChange={(val) => update('logoUrl', val)}
+          />
         </div>
 
         {/* Payment options */}
