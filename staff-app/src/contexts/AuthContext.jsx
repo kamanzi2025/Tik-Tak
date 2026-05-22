@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from '../firebase/config'
+import { auth, isFirebaseConfigured } from '../firebase/config'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../firebase/config'
+import { localGetCurrentUser } from '../firebase/localStore'
 
 const AuthContext = createContext(null)
 
@@ -11,6 +12,12 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!isFirebaseConfigured) {
+      setUser(localGetCurrentUser())
+      setLoading(false)
+      return
+    }
+
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const snap = await getDoc(doc(db, 'users', firebaseUser.uid))

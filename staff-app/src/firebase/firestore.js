@@ -4,23 +4,31 @@ import {
   query, where, orderBy,
   onSnapshot, serverTimestamp,
 } from 'firebase/firestore'
-import { db } from './config'
+import { db, isFirebaseConfigured } from './config'
+import {
+  localSubscribeRestaurant, localUpdateRestaurant,
+  localSubscribeMenu, localAddMenuItem, localUpdateMenuItem, localDeleteMenuItem,
+  localUpdateUser,
+} from './localStore'
 
 // ── Restaurants ────────────────────────────────────────────────────────────────
 
 export function subscribeRestaurant(restaurantId, callback) {
+  if (!isFirebaseConfigured) return localSubscribeRestaurant(restaurantId, callback)
   return onSnapshot(doc(db, 'restaurants', restaurantId), (d) => {
     if (d.exists()) callback({ id: d.id, ...d.data() })
   })
 }
 
 export async function updateRestaurant(restaurantId, data) {
+  if (!isFirebaseConfigured) return localUpdateRestaurant(restaurantId, data)
   await updateDoc(doc(db, 'restaurants', restaurantId), data)
 }
 
 // ── Menu Items ─────────────────────────────────────────────────────────────────
 
 export function subscribeMenu(restaurantId, callback) {
+  if (!isFirebaseConfigured) return localSubscribeMenu(restaurantId, callback)
   const q = query(
     collection(db, 'menuItems'),
     where('restaurantId', '==', restaurantId),
@@ -32,20 +40,24 @@ export function subscribeMenu(restaurantId, callback) {
 }
 
 export async function addMenuItem(data) {
+  if (!isFirebaseConfigured) return localAddMenuItem(data)
   await addDoc(collection(db, 'menuItems'), { ...data, createdAt: serverTimestamp() })
 }
 
 export async function updateMenuItem(itemId, data) {
+  if (!isFirebaseConfigured) return localUpdateMenuItem(itemId, data)
   await updateDoc(doc(db, 'menuItems', itemId), data)
 }
 
 export async function deleteMenuItem(itemId) {
+  if (!isFirebaseConfigured) return localDeleteMenuItem(itemId)
   await deleteDoc(doc(db, 'menuItems', itemId))
 }
 
 // ── Orders ─────────────────────────────────────────────────────────────────────
 
 export function subscribeRestaurantOrders(restaurantId, callback) {
+  if (!isFirebaseConfigured) { callback([]); return () => {} }
   const q = query(
     collection(db, 'orders'),
     where('restaurantId', '==', restaurantId),
@@ -57,9 +69,11 @@ export function subscribeRestaurantOrders(restaurantId, callback) {
 }
 
 export async function updateOrderStatus(orderId, status) {
+  if (!isFirebaseConfigured) return
   await updateDoc(doc(db, 'orders', orderId), { status })
 }
 
 export async function updateUser(uid, data) {
+  if (!isFirebaseConfigured) return localUpdateUser(uid, data)
   await updateDoc(doc(db, 'users', uid), data)
 }
