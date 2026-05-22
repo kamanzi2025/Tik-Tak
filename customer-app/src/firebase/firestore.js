@@ -16,7 +16,8 @@ export function generateOrderCode() {
 // ── Restaurants ────────────────────────────────────────────────────────────────
 
 export function subscribeRestaurants(callback) {
-  return onSnapshot(collection(db, 'restaurants'), (snap) =>
+  const q = query(collection(db, 'restaurants'), where('published', '==', true))
+  return onSnapshot(q, (snap) =>
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
   )
 }

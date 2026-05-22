@@ -30,6 +30,7 @@ export async function registerStaff(restaurantName, email, password) {
     imageUrl: '',
     logoUrl: '',
     isOpen: false,
+    published: false,
     createdAt: serverTimestamp(),
   })
   return { uid: cred.user.uid, email, name: `${restaurantName} Staff`, role: 'staff', restaurantId }

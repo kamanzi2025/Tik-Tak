@@ -38,7 +38,7 @@ export default function RestaurantProfile() {
   const [form, setForm] = useState({
     name: '', tagline: '', description: '', category: '',
     location: '', openingHours: '', phone: '',
-    imageUrl: '', logoUrl: '', isOpen: true,
+    imageUrl: '', logoUrl: '', isOpen: true, published: false,
   })
   const [pay, setPay] = useState(DEFAULT_PAY)
   const [saving, setSaving] = useState(false)
@@ -56,6 +56,7 @@ export default function RestaurantProfile() {
       location: restaurant.location || '', openingHours: restaurant.openingHours || '',
       phone: restaurant.phone || '', imageUrl: restaurant.imageUrl || '',
       logoUrl: restaurant.logoUrl || '', isOpen: restaurant.isOpen ?? true,
+      published: restaurant.published ?? false,
     })
     const p = restaurant.paymentOptions || {}
     setPay({
@@ -115,6 +116,17 @@ export default function RestaurantProfile() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 pb-36 space-y-4">
+        {/* Publish toggle — controls visibility on customer home page */}
+        <div className={`rounded-2xl shadow-sm p-4 flex items-center justify-between ${form.published ? 'bg-green-50 border border-green-200' : 'bg-white'}`}>
+          <div>
+            <p className="font-semibold text-gray-900 text-sm">Visible to Customers</p>
+            <p className="text-xs text-gray-500">
+              {form.published ? 'Your restaurant appears on the customer app' : 'Hidden — set up your profile & menu first, then publish'}
+            </p>
+          </div>
+          <Toggle on={form.published} onToggle={() => update('published', !form.published)} color="bg-green-500" />
+        </div>
+
         {/* Accept orders toggle — saves immediately so customers see the change at once */}
         <div className="bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between">
           <div>
