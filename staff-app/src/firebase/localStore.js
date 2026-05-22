@@ -119,6 +119,6 @@ export function localSubscribeRestaurantOrders(restaurantId, callback) {
   return onEvent('orders', emit)
 }
 
-export async function localUpdateOrderStatus(orderId, status) {
-  await api(`/orders/${orderId}`, 'PUT', { status })
+export async function localUpdateOrderStatus(orderId, status, extra = {}) {
+  await api(`/orders/${orderId}`, 'PUT', { status, ...extra })
 }

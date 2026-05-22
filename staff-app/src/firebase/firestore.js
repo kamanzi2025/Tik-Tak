@@ -69,9 +69,9 @@ export function subscribeRestaurantOrders(restaurantId, callback) {
   )
 }
 
-export async function updateOrderStatus(orderId, status) {
-  if (!isFirebaseConfigured) return localUpdateOrderStatus(orderId, status)
-  await updateDoc(doc(db, 'orders', orderId), { status })
+export async function updateOrderStatus(orderId, status, extra = {}) {
+  if (!isFirebaseConfigured) return localUpdateOrderStatus(orderId, status, extra)
+  await updateDoc(doc(db, 'orders', orderId), { status, ...extra })
 }
 
 export async function updateUser(uid, data) {

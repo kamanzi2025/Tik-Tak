@@ -5,11 +5,19 @@ import LoadingSpinner from '../components/common/LoadingSpinner'
 
 const FILTERS = ['Today', 'This Week', 'This Month']
 
+function toDate(ts) {
+  if (!ts) return null
+  if (ts?.toDate) return ts.toDate()
+  if (typeof ts === 'number') return new Date(ts)
+  if (ts?.seconds) return new Date(ts.seconds * 1000)
+  return null
+}
+
 function filterOrders(orders, filter) {
   const now = new Date()
   return orders.filter((o) => {
-    if (!o.createdAt?.toDate) return false
-    const d = o.createdAt.toDate()
+    const d = toDate(o.createdAt)
+    if (!d) return true
     if (filter === 'Today') return d.toDateString() === now.toDateString()
     if (filter === 'This Week') { const w = new Date(now); w.setDate(now.getDate() - 7); return d >= w }
     if (filter === 'This Month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
@@ -18,8 +26,8 @@ function filterOrders(orders, filter) {
 }
 
 function formatDate(ts) {
-  if (!ts?.toDate) return ''
-  const d = ts.toDate()
+  const d = toDate(ts)
+  if (!d) return ''
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
   const dStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
@@ -44,20 +52,21 @@ export default function Sales() {
 
   const stats = useMemo(() => {
     const completed = filtered.filter((o) => o.status === 'completed')
+    const paid = filtered.filter((o) => o.status === 'completed' && o.paid)
     const declined = filtered.filter((o) => o.status === 'declined')
-    const revenue = completed.reduce((s, o) => s + (o.total || 0), 0)
+    const revenue = paid.reduce((s, o) => s + (o.total || 0), 0)
     const itemCounts = {}
-    completed.forEach((o) => o.items?.forEach((i) => {
+    paid.forEach((o) => o.items?.forEach((i) => {
       itemCounts[i.name] = (itemCounts[i.name] || 0) + i.qty
     }))
     const topItems = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]).slice(0, 5)
     const paymentCounts = { mtn: 0, airtel: 0, cash: 0 }
-    filtered.forEach((o) => {
+    paid.forEach((o) => {
       if (o.paymentMethod === 'mtn') paymentCounts.mtn++
       else if (o.paymentMethod === 'airtel') paymentCounts.airtel++
       else paymentCounts.cash++
     })
-    return { total: filtered.length, revenue, completed: completed.length, declined: declined.length, topItems, paymentCounts }
+    return { total: filtered.length, revenue, completed: completed.length, paid: paid.length, declined: declined.length, topItems, paymentCounts }
   }, [filtered])
 
   if (loading) return <LoadingSpinner />
@@ -84,7 +93,7 @@ export default function Sales() {
           {[
             { label: 'Total Orders', value: stats.total, icon: '📋' },
             { label: 'Revenue (RWF)', value: stats.revenue.toLocaleString(), icon: '💰' },
-            { label: 'Completed', value: stats.completed, icon: '✅' },
+            { label: 'Payment Received', value: stats.paid, icon: '✅' },
             { label: 'Declined', value: stats.declined, icon: '❌' },
           ].map(({ label, value, icon }) => (
             <div key={label} className="bg-white rounded-2xl shadow-sm p-4">

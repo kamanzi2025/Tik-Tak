@@ -2,26 +2,29 @@ import { useState } from 'react'
 import { updateOrderStatus } from '../../firebase/firestore'
 
 function timeAgo(ts) {
-  if (!ts?.toDate) return ''
-  const diff = Math.floor((Date.now() - ts.toDate().getTime()) / 1000)
+  if (!ts) return ''
+  const ms = ts?.toDate ? ts.toDate().getTime() : (typeof ts === 'number' ? ts : ts?.seconds * 1000)
+  if (!ms) return ''
+  const diff = Math.floor((Date.now() - ms) / 1000)
   if (diff < 60) return `${diff}s ago`
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
   return `${Math.floor(diff / 3600)}h ago`
 }
 
-const NEXT_STATUS = { received: 'preparing', preparing: 'ready', ready: 'completed' }
-const ACTION_LABEL = { received: 'Accept', preparing: 'Mark Ready', ready: 'Complete' }
+const NEXT_STATUS = { received: 'preparing', preparing: 'ready' }
+const ACTION_LABEL = { received: 'Accept', preparing: 'Mark Ready' }
 
 const PAYMENT_BADGE = {
-  mtn:    { label: 'MTN',   cls: 'bg-amber-100 text-amber-700' },
+  mtn:    { label: 'MTN',    cls: 'bg-amber-100 text-amber-700' },
   airtel: { label: 'Airtel', cls: 'bg-red-100 text-red-700' },
-  cash:   { label: 'Cash',  cls: 'bg-gray-100 text-gray-600' },
+  cash:   { label: 'Cash',   cls: 'bg-gray-100 text-gray-600' },
 }
 
 export default function StaffOrderCard({ order }) {
   const [loading, setLoading] = useState(false)
+  const [paidLoading, setPaidLoading] = useState(false)
   const [declining, setDeclining] = useState(false)
-  const shortId = order.id.slice(-5).toUpperCase()
+  const shortId = order.id?.slice(-5).toUpperCase()
   const payBadge = PAYMENT_BADGE[order.paymentMethod] || PAYMENT_BADGE.cash
 
   async function advance() {
@@ -30,6 +33,12 @@ export default function StaffOrderCard({ order }) {
     setLoading(true)
     await updateOrderStatus(order.id, next)
     setLoading(false)
+  }
+
+  async function completeWithPayment() {
+    setPaidLoading(true)
+    await updateOrderStatus(order.id, 'completed', { paid: true })
+    setPaidLoading(false)
   }
 
   async function decline() {
@@ -77,10 +86,20 @@ export default function StaffOrderCard({ order }) {
             {declining ? '…' : 'Decline'}
           </button>
         )}
+
+        {/* Accept / Mark Ready */}
         {ACTION_LABEL[order.status] && (
           <button onClick={advance} disabled={loading}
             className="flex-1 bg-staff text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-50">
             {loading ? '…' : ACTION_LABEL[order.status]}
+          </button>
+        )}
+
+        {/* Ready stage — two completion buttons */}
+        {order.status === 'ready' && (
+          <button onClick={completeWithPayment} disabled={paidLoading}
+            className="flex-1 bg-green-600 text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-50">
+            {paidLoading ? '…' : 'Payment Received'}
           </button>
         )}
       </div>

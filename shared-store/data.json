@@ -1,0 +1,121 @@
+{
+  "restaurants": {
+    "kk": {
+      "id": "kk",
+      "name": "k&k",
+      "tagline": "",
+      "description": "",
+      "category": "",
+      "location": "",
+      "openingHours": "",
+      "phone": "",
+      "imageUrl": "",
+      "logoUrl": "",
+      "isOpen": true,
+      "published": true
+    },
+    "chills": {
+      "id": "chills",
+      "name": "Sip and Chill",
+      "tagline": "",
+      "description": "",
+      "category": "",
+      "location": "",
+      "openingHours": "",
+      "phone": "",
+      "imageUrl": "",
+      "logoUrl": "https://www.google.com/imgres?imgurl=https://www.shutterstock.com/image-illustration/bandung-indonesia-19-march-2023-600nw-2276845177.jpg&imgrefurl=https://www.shutterstock.com/search/bob-marley-art&h=600&w=600&tbnid=cOnvxiOsOGaF5M&q=download+bob+marley+picture&tbnh=135&tbnw=135&usg=AI4_-kShCpBd3Yhff_WkVvPVLZ5VbKFeDA&vet=1&docid=0pkVRiYqJJrEbM&client=safari&sa=X&ved=2ahUKEwjwreiD8syUAxXMMvsDHUkcAfYQ9QF6BAgFEAY",
+      "isOpen": true,
+      "published": true
+    }
+  },
+  "menuItems": [
+    {
+      "id": "item-1779452228265",
+      "name": "za",
+      "category": "subaru",
+      "price": 3000,
+      "description": "",
+      "imageUrl": "",
+      "inStock": true,
+      "restaurantId": "kk"
+    },
+    {
+      "id": "item-1779452674922",
+      "name": "kiwingu",
+      "category": "entre",
+      "price": 2500,
+      "description": "",
+      "imageUrl": "",
+      "inStock": true,
+      "restaurantId": "chills"
+    }
+  ],
+  "orders": [
+    {
+      "id": "order-1779452327869",
+      "orderCode": "GG-3BFL",
+      "restaurantId": "kk",
+      "restaurantName": "k&k",
+      "customerId": null,
+      "customerName": "kkkkkk",
+      "guestPhone": "0783363830",
+      "items": [
+        {
+          "itemId": "item-1779452228265",
+          "name": "za",
+          "price": 3000,
+          "qty": 1
+        }
+      ],
+      "total": 3000,
+      "paymentMethod": "cash",
+      "paymentStatus": "unpaid",
+      "note": "ishureho na paper",
+      "status": "completed",
+      "createdAt": 1779452327869
+    },
+    {
+      "id": "order-1779452451237",
+      "orderCode": "GG-8R0W",
+      "restaurantId": "kk",
+      "restaurantName": "k&k",
+      "customerId": null,
+      "customerName": "kkkkk",
+      "guestPhone": "0783363830",
+      "items": [
+        {
+          "itemId": "item-1779452228265",
+          "name": "za",
+          "price": 3000,
+          "qty": 1
+        }
+      ],
+      "total": 3000,
+      "paymentMethod": "cash",
+      "paymentStatus": "unpaid",
+      "note": "",
+      "status": "completed",
+      "createdAt": 1779452451237
+    }
+  ],
+  "users": [
+    {
+      "uid": "local-1779452201032",
+      "email": "gkamanzig@gmail.com",
+      "name": "k&k Staff",
+      "role": "staff",
+      "restaurantId": "kk",
+      "password": "0788485211"
+    },
+    {
+      "uid": "local-1779452645576",
+      "email": "g.kamanzi1@alustudent.com",
+      "name": "chills Staff",
+      "role": "staff",
+      "restaurantId": "chills",
+      "password": "0788485211"
+    }
+  ],
+  "customers": []
+}
