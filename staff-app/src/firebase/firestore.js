@@ -8,6 +8,7 @@ import { db, isFirebaseConfigured } from './config'
 import {
   localSubscribeRestaurant, localUpdateRestaurant,
   localSubscribeMenu, localAddMenuItem, localUpdateMenuItem, localDeleteMenuItem,
+  localSubscribeRestaurantOrders, localUpdateOrderStatus,
   localUpdateUser,
 } from './localStore'
 
@@ -57,7 +58,7 @@ export async function deleteMenuItem(itemId) {
 // ── Orders ─────────────────────────────────────────────────────────────────────
 
 export function subscribeRestaurantOrders(restaurantId, callback) {
-  if (!isFirebaseConfigured) { callback([]); return () => {} }
+  if (!isFirebaseConfigured) return localSubscribeRestaurantOrders(restaurantId, callback)
   const q = query(
     collection(db, 'orders'),
     where('restaurantId', '==', restaurantId),
@@ -69,7 +70,7 @@ export function subscribeRestaurantOrders(restaurantId, callback) {
 }
 
 export async function updateOrderStatus(orderId, status) {
-  if (!isFirebaseConfigured) return
+  if (!isFirebaseConfigured) return localUpdateOrderStatus(orderId, status)
   await updateDoc(doc(db, 'orders', orderId), { status })
 }
 

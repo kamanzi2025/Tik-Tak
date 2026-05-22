@@ -4,6 +4,7 @@ const KEY = {
   users: 'gg_users',
   restaurants: 'gg_restaurants',
   menuItems: 'gg_menuItems',
+  orders: 'gg_orders',
   currentUser: 'gg_currentUser',
 }
 
@@ -118,4 +119,28 @@ export async function localDeleteMenuItem(itemId) {
   const item = items.find((i) => i.id === itemId)
   write(KEY.menuItems, items.filter((i) => i.id !== itemId))
   if (item) notify(`menu:${item.restaurantId}`)
+}
+
+// ── Orders (written by customer app, read here via storage event) ──────────────
+
+export function localSubscribeRestaurantOrders(restaurantId, callback) {
+  function emit() {
+    const orders = read(KEY.orders, [])
+    callback(orders.filter((o) => o.restaurantId === restaurantId).sort((a, b) => b.createdAt - a.createdAt))
+  }
+  emit()
+  // storage event fires when the customer app (other tab) writes new orders
+  function handler(e) { if (e.key === KEY.orders) emit() }
+  window.addEventListener('storage', handler)
+  // also listen for same-tab updates via pub/sub
+  const unsub = addSub(`orders:${restaurantId}`, emit)
+  return () => { window.removeEventListener('storage', handler); unsub() }
+}
+
+export async function localUpdateOrderStatus(orderId, status) {
+  const orders = read(KEY.orders, [])
+  const updated = orders.map((o) => o.id === orderId ? { ...o, status } : o)
+  write(KEY.orders, updated)
+  const order = updated.find((o) => o.id === orderId)
+  if (order) notify(`orders:${order.restaurantId}`)
 }

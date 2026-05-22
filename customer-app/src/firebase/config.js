@@ -12,7 +12,9 @@ const firebaseConfig = {
   appId: 'YOUR_APP_ID',
 }
 
-const app = initializeApp(firebaseConfig)
-export const auth = getAuth(app)
-export const db = getFirestore(app)
+export const isFirebaseConfigured = !firebaseConfig.apiKey.startsWith('YOUR_')
+
+const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : null
+export const auth = isFirebaseConfigured ? getAuth(app) : null
+export const db = isFirebaseConfigured ? getFirestore(app) : null
 export default app
